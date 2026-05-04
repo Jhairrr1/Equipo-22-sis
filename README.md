@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Equipo-22-sis
 =======
 # Sistema Web Restaurante
