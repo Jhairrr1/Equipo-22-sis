@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulo 3 - Sistema de Facturación Profesional</title>
+  <link rel="stylesheet" href="modulo3-styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="header-title">
+          <h1>🧾 SISTEMA DE FACTURACIÓN</h1>
+          <p>Gestión Profesional de Facturas Electrónicas</p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-card">
+            <span class="stat-label">Facturas Hoy</span>
+            <span class="stat-value" id="facturasHoy">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Ingresos</span>
+            <span class="stat-value" id="totalIngresos">S/ 0.00</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- NAVEGACIÓN DE TABS -->
+      <nav class="tabs-nav">
+        <button class="tab-btn active" onclick="cambiarTab('nueva')">➕ Nueva Factura</button>
+        <button class="tab-btn" onclick="cambiarTab('historial')">📜 Historial</button>
+        <button class="tab-btn" onclick="cambiarTab('reportes')">📊 Reportes</button>
+      </nav>
+
+      <!-- TAB 1: NUEVA FACTURA -->
+      <div id="tab-nueva" class="tab-content active">
+        <div class="grid-2">
+          <!-- PANEL DATOS FACTURA -->
+          <div class="card">
+            <div class="card-header">
+              <h2>📋 Datos de la Factura</h2>
+            </div>
+
+            <div class="form-section">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Serie</label>
+                  <input type="text" id="serie" value="F001" readonly class="input-readonly">
+                </div>
+                <div class="form-group">
+                  <label>Número</label>
+                  <input type="text" id="numeroFact" readonly class="input-readonly">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Fecha de Emisión *</label>
+                <input type="date" id="fechaEmision" required>
+              </div>
+
+              <div class="form-group">
+                <label>Fecha de Vencimiento</label>
+                <input type="date" id="fechaVencimiento">
+              </div>
+
+              <div class="divider"></div>
+
+              <h3 class="form-title">Datos del Cliente</h3>
+
+              <div class="form-group">
+                <label>RUC/DNI *</label>
+                <div class="input-group">
+                  <input type="text" id="clienteRuc" placeholder="12345678901" maxlength="11">
+                  <button class="btn-icon" onclick="buscarCliente()" title="Buscar cliente">🔍</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Nombre/Razón Social *</label>
+                <input type="text" id="clienteNombre" placeholder="Nombre completo">
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" id="clienteEmail" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="form-group">
+                  <label>Teléfono</label>
+                  <input type="tel" id="clienteTelefono" placeholder="+51 999 999 999">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="clienteDireccion" placeholder="Av. Principal 123">
+              </div>
+
+              <button class="btn btn-secondary" onclick="guardarCliente()">💾 Guardar Cliente</button>
+            </div>
+          </div>
+
+          <!-- PANEL ITEMS -->
+          <div class="card">
+            <div class="card-header">
+              <h2>🛍️ Items de Factura</h2>
+            </div>
+
+            <div class="form-section">
+              <div class="form-group">
+                <label>Descripción del Producto/Servicio *</label>
+                <input type="text" id="itemDescripcion" placeholder="Ej: Asesoría profesional">
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Cantidad *</label>
+                  <input type="number" id="itemCantidad" value="1" min="1" step="0.01">
+                </div>
+                <div class="form-group">
+                  <label>Precio Unitario *</label>
+                  <input type="number" id="itemPrecio" value="0" min="0" step="0.01" placeholder="0.00">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Descuento (%)</label>
+                <input type="number" id="itemDescuento" value="0" min="0" max="100" step="0.1">
+              </div>
+
+              <div class="preview-item" id="previewItem">
+                <div class="preview-row">
+                  <span>Subtotal línea:</span>
+                  <strong id="previewSubtotal">S/ 0.00</strong>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" onclick="agregarItem()">➕ Agregar Item</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="items-list" id="itemsList">
+              <div class="empty-state">
+                <span class="empty-icon">📦</span>
+                <p>No hay items agregados</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESUMEN Y OPCIONES -->
+        <div class="grid-1 mt-30">
+          <div class="card">
+            <div class="card-header">
+              <h2>💰 Resumen de la Factura</h2>
+            </div>
+
+            <div class="resumen-grid">
+              <div class="resumen-item">
+                <span class="resumen-label">Subtotal</span>
+                <span class="resumen-value" id="resumenSubtotal">S/ 0.00</span>
+              </div>
+              <div class="resumen-item">
+                <span class="resumen-label">Descuento Total</span>
+                <span class="resumen-value" id="resumenDescuento">S/ 0.00</span>
+              </div>
+              <div class="resumen-item">
+                <span class="resumen-label">Base Imponible</span>
+                <span class="resumen-value" id="resumenBase">S/ 0.00</span>
+              </div>
+              <div class="resumen-item">
+                <span class="resumen-label">IGV (18%)</span>
+                <span class="resumen-value" id="resumenIGV">S/ 0.00</span>
+              </div>
+              <div class="resumen-item highlight">
+                <span class="resumen-label">TOTAL</span>
+                <span class="resumen-value" id="resumenTotal">S/ 0.00</span>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="form-section">
+              <h3 class="form-title">Opciones Adicionales</h3>
+
+              <div class="form-group">
+                <label>Forma de Pago *</label>
+                <div class="payment-methods">
+                  <button class="method-btn active" onclick="seleccionarPago(this, 'contado')">💵 Contado</button>
+                  <button class="method-btn" onclick="seleccionarPago(this, 'credito')">📅 Crédito</button>
+                  <button class="method-btn" onclick="seleccionarPago(this, 'transferencia')">💳 Transferencia</button>
+                </div>
+                <input type="hidden" id="metodoPago" value="contado">
+              </div>
+
+              <div class="form-group" id="diasCreditoDiv" style="display: none;">
+                <label>Días de Crédito</label>
+                <input type="number" id="diasCredito" value="30" min="1" step="1">
+              </div>
+
+              <div class="form-group">
+                <label>Notas/Observaciones</label>
+                <textarea id="notasFactura" placeholder="Observaciones adicionales..."></textarea>
+              </div>
+
+              <div class="button-group">
+                <button class="btn btn-secondary" onclick="limpiarFormulario()">🔄 Limpiar</button>
+                <button class="btn btn-success" onclick="generarFactura()">✅ Generar Factura</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: HISTORIAL -->
+      <div id="tab-historial" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <h2>📜 Historial de Facturas</h2>
+          </div>
+
+          <div class="search-section">
+            <input type="text" id="buscarFactura" placeholder="Buscar por número, cliente, RUC..." class="search-input">
+            <select id="filtroEstado">
+              <option value="">Todos los Estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="pagado">Pagado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+            <button class="btn btn-secondary" onclick="filtrarFacturas()">🔍 Filtrar</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="facturas-table">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Cliente</th>
+                  <th>Fecha</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaFacturas">
+                <tr>
+                  <td colspan="6" class="text-center empty-table">No hay facturas registradas</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: REPORTES -->
+      <div id="tab-reportes" class="tab-content">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h2>📊 Resumen por Período</h2>
+            </div>
+
+            <div class="form-section">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Fecha Inicio</label>
+                  <input type="date" id="reporteFechaInicio">
+                </div>
+                <div class="form-group">
+                  <label>Fecha Fin</label>
+                  <input type="date" id="reporteFechaFin">
+                </div>
+              </div>
+
+              <button class="btn btn-primary" onclick="generarReporte()">📈 Generar Reporte</button>
+            </div>
+
+            <div id="reporteResultado" style="display: none;">
+              <div class="divider"></div>
+              <div class="resumen-grid">
+                <div class="resumen-item">
+                  <span class="resumen-label">Facturas Emitidas</span>
+                  <span class="resumen-value" id="reporteFacturas">0</span>
+                </div>
+                <div class="resumen-item">
+                  <span class="resumen-label">Monto Total</span>
+                  <span class="resumen-value" id="reporteMonto">S/ 0.00</span>
+                </div>
+                <div class="resumen-item">
+                  <span class="resumen-label">Promedio por Factura</span>
+                  <span class="resumen-value" id="reportePromedio">S/ 0.00</span>
+                </div>
+                <div class="resumen-item">
+                  <span class="resumen-label">IGV Total</span>
+                  <span class="resumen-value" id="reporteIGV">S/ 0.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2>🏆 Top Clientes</h2>
+            </div>
+
+            <div id="topClientes" class="top-list">
+              <div class="empty-state">
+                <span class="empty-icon">👥</span>
+                <p>Sin datos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE VISTA PREVIA -->
+  <div id="modalFactura" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🧾 Vista Previa de Factura</h2>
+        <button class="modal-close" onclick="cerrarModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="facturaPreview" class="factura-print"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+        <button class="btn btn-info" onclick="imprimirFactura()">🖨️ Imprimir</button>
+        <button class="btn btn-success" onclick="descargarPDF()">⬇️ Descargar PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="modulo3-script.js"></script>
+</body>
+</html>
