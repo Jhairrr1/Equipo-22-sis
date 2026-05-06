@@ -1,5 +1,6 @@
 # 🍽️ RestaurantePro
 
+<<<<<<< HEAD
 Sistema web de gestión para restaurantes desarrollado como proyecto del curso **Sistemas de Información**.
 
 RestaurantePro permite administrar de manera digital las operaciones principales de un restaurante: **mesas, menú, pedidos, cocina, caja y reportes**.  
@@ -255,3 +256,105 @@ El flujo principal del sistema es:
 
 ```txt
 Mesas → Menú → Pedidos → Cocina → Caja → Reportes
+=======
+Sistema web para gestión de restaurante hecho con **HTML, CSS y JavaScript puro**.
+
+## ✅ Características
+
+- Sin login: entra directo al dashboard.
+- Módulos separados por carpeta.
+- Cada módulo tiene su propio **HTML + CSS + JS**.
+- Datos guardados en `localStorage`.
+- Validaciones comunes incluidas.
+- Pantalla completa y layout responsive.
+
+## 🧩 Módulos
+
+### Gabriela — Mesas
+
+```txt
+modulos/mesas/mesas.html
+modulos/mesas/mesas.css
+modulos/mesas/mesas.js
+```
+
+### Jeremyas — Menú
+
+```txt
+modulos/menu/menu.html
+modulos/menu/menu.css
+modulos/menu/menu.js
+```
+
+### Pedro — Pedidos y Caja
+
+```txt
+modulos/pedidos/pedidos.html
+modulos/pedidos/pedidos.css
+modulos/pedidos/pedidos.js
+modulos/caja/caja.html
+modulos/caja/caja.css
+modulos/caja/caja.js
+```
+
+## 📁 Estructura
+
+```txt
+RestaurantePro/
+├─ index.html
+├─ README.md
+├─ css/styles.css
+├─ js/app.js
+├─ js/data.js
+└─ modulos/
+   ├─ mesas/mesas.html mesas.css mesas.js
+   ├─ menu/menu.html menu.css menu.js
+   ├─ pedidos/pedidos.html pedidos.css pedidos.js
+   ├─ cocina/cocina.html cocina.css cocina.js
+   ├─ caja/caja.html caja.css caja.js
+   ├─ dashboard/dashboard.html dashboard.css dashboard.js
+   └─ reportes/reportes.html reportes.css reportes.js
+```
+
+## ▶️ Cómo usar
+
+1. Abre `index.html`.
+2. Registra mesas en **Mesas**.
+3. Registra platos activos con stock en **Menú**.
+4. Crea pedidos en **Pedidos**.
+5. Cambia estados en **Cocina**.
+6. Cobra pedidos listos o entregados en **Caja**.
+7. Revisa métricas en **Reportes**.
+
+## 🔄 Flujo
+
+```txt
+Mesas → Menú → Pedidos → Cocina → Caja → Reportes
+```
+
+## ✅ Validaciones
+
+- No permite mesas duplicadas.
+- No permite platos duplicados.
+- No permite precios menores o iguales a cero.
+- No permite stock negativo.
+- No permite pedidos sin mesa o sin platos.
+- No permite agregar platos sin stock.
+- No permite cobrar pedidos que no estén listos o entregados.
+
+## 🌿 Git recomendado
+
+```bash
+# Gabriela
+git add modulos/mesas/mesas.html modulos/mesas/mesas.css modulos/mesas/mesas.js
+git commit -m "Agregar modulo completo de mesas"
+
+# Jeremyas
+git add modulos/menu/menu.html modulos/menu/menu.css modulos/menu/menu.js
+git commit -m "Agregar modulo completo de menu"
+
+# Pedro
+git add modulos/pedidos modulos/caja
+git commit -m "Agregar modulos completos de pedidos y caja"
+```
+>>>>>>> e88c65a (cambio final)

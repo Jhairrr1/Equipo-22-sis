@@ -1,0 +1,2 @@
+/* CSS específico del módulo Mesas */
+.mesas-resumen{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}.mesas-resumen .mini{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 16px;min-width:150px;box-shadow:var(--shadow-sm)}.mesa-card{min-height:210px}.mesa-card .num{font-size:44px}.mesa-card .btn{white-space:nowrap}

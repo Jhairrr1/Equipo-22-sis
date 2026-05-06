@@ -1,0 +1,2 @@
+/* CSS específico del módulo Caja */
+.receipt{max-width:420px}.pay-options{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.pay-options label{border:1.5px solid var(--border);border-radius:14px;padding:14px;background:#fff;cursor:pointer}.pay-options label:hover{border-color:var(--primary)}

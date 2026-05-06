@@ -1,0 +1,2 @@
+/* CSS específico del módulo Cocina */
+.kanban{align-items:start}.kanban-col{min-height:520px}.k-card{border-left:4px solid var(--primary)}.k-card ul{margin:10px 0 0}.k-card li{padding:6px 0;border-bottom:1px dashed var(--border)}
