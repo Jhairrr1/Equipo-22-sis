@@ -1,47 +1,83 @@
-let cart = [];
+/* pedidos.js - módulo de pedidos funcional independiente */
+
+let pedidos = JSON.parse(localStorage.getItem('rp_pedidos')) || [];
+
+function guardarPedidosStorage() {
+  localStorage.setItem('rp_pedidos', JSON.stringify(pedidos));
+}
+
+function dinero(n) {
+  return 'S/ ' + Number(n || 0).toFixed(2);
+}
+
+function obtenerFecha() {
+  return new Date().toLocaleString('es-PE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function badgePedido(estado) {
+  let clase = 'warning';
+
+  if (estado === 'Pendiente') clase = 'warning';
+  if (estado === 'En preparación') clase = 'info';
+  if (estado === 'Listo') clase = 'success';
+  if (estado === 'Entregado') clase = 'primary';
+  if (estado === 'Pagado') clase = 'success';
+
+  return `<span class="badge ${clase}">${estado}</span>`;
+}
 
 function renderPedidos() {
-  const pedidos = DB.get(DB_KEYS.PEDIDOS) || [];
-  const contenedor = document.getElementById('pedidosTable');
+  const tabla = document.getElementById('pedidosTable');
 
-  if (!contenedor) return;
+  if (!tabla) return;
 
   if (pedidos.length === 0) {
-    contenedor.innerHTML = `
+    tabla.innerHTML = `
       <div style="text-align:center; padding:50px; color:var(--text-2);">
-        <h3 style="margin-bottom:8px;">No hay pedidos registrados</h3>
-        <p>Presiona “Nuevo pedido” para crear uno.</p>
+        <h3 style="font-size:20px; margin-bottom:8px;">No hay pedidos registrados</h3>
+        <p>Presiona <strong>+ Nuevo pedido</strong> para registrar el primero.</p>
       </div>
     `;
     return;
   }
 
-  contenedor.innerHTML = `
+  tabla.innerHTML = `
     <table class="tbl">
       <thead>
         <tr>
           <th>#</th>
           <th>Mesa</th>
-          <th>Items</th>
+          <th>Cliente</th>
+          <th>Pedido</th>
           <th>Total</th>
           <th>Estado</th>
           <th>Fecha</th>
           <th>Acciones</th>
         </tr>
       </thead>
+
       <tbody>
-        ${[...pedidos].reverse().map(p => `
+        ${pedidos.map((p, index) => `
           <tr>
-            <td><strong>#${p.id}</strong></td>
-            <td>Mesa ${p.mesaId}</td>
-            <td>${p.items.length} platos</td>
-            <td><strong>${fmt(p.total)}</strong></td>
-            <td>${estadoBadge(p.estado)}</td>
-            <td style="font-size:12px; color:var(--text-3);">${shortDate(p.fecha)}</td>
+            <td><strong>#${index + 1}</strong></td>
+            <td>Mesa ${p.mesa}</td>
+            <td>${p.cliente}</td>
+            <td>${p.detalle}</td>
+            <td><strong>${dinero(p.total)}</strong></td>
+            <td>${badgePedido(p.estado)}</td>
+            <td style="font-size:12px; color:var(--text-3);">${p.fecha}</td>
             <td>
-              <button class="btn btn-sm btn-outline" onclick="verPedido(${p.id})">Ver</button>
-              <button class="btn btn-sm btn-outline" onclick="cambiarEstadoPedido(${p.id})">Estado</button>
-              <button class="btn btn-sm btn-danger" onclick="eliminarPedido(${p.id})">Eliminar</button>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-sm btn-outline" onclick="verPedido(${index})">Ver</button>
+                <button class="btn btn-sm btn-outline" onclick="cambiarEstadoPedido(${index})">Estado</button>
+                <button class="btn btn-sm btn-danger" onclick="eliminarPedido(${index})">Eliminar</button>
+              </div>
             </td>
           </tr>
         `).join('')}
@@ -51,267 +87,105 @@ function renderPedidos() {
 }
 
 function openNuevoPedido() {
-  cart = [];
+  document.getElementById('mesaPedido').value = '';
+  document.getElementById('clientePedido').value = '';
+  document.getElementById('detallePedido').value = '';
+  document.getElementById('totalPedido').value = '';
+  document.getElementById('estadoPedido').value = 'Pendiente';
+  document.getElementById('vistaTotalPedido').textContent = 'S/ 0.00';
 
-  const mesas = DB.get(DB_KEYS.MESAS) || [];
-  const menu = DB.get(DB_KEYS.MENU) || [];
-
-  if (mesas.length === 0) {
-    toast('error', 'No hay mesas', 'Primero crea una mesa en el módulo Mesas.');
-    return;
-  }
-
-  if (menu.length === 0) {
-    toast('error', 'No hay platos', 'Primero crea platos en el módulo Menú.');
-    return;
-  }
-
-  const mesasDisponibles = mesas.filter(m =>
-    m.estado === 'Disponible' || m.estado === 'Ocupada'
-  );
-
-  if (mesasDisponibles.length === 0) {
-    toast('error', 'Sin mesas disponibles', 'No hay mesas disponibles para pedidos.');
-    return;
-  }
-
-  document.getElementById('selMesa').innerHTML = `
-    <option value="">Seleccionar mesa</option>
-    ${mesasDisponibles.map(m => `
-      <option value="${m.id}">
-        Mesa ${m.numero} - ${m.capacidad} personas - ${m.estado}
-      </option>
-    `).join('')}
-  `;
-
-  renderPlatosSeleccion();
-  renderCart();
   openModal('pedidoModal');
 }
 
-function renderPlatosSeleccion() {
-  const menu = DB.get(DB_KEYS.MENU) || [];
-  const platosActivos = menu.filter(p => p.estado === 'Activo');
-
-  const contenedor = document.getElementById('platosSel');
-
-  if (platosActivos.length === 0) {
-    contenedor.innerHTML = `
-      <p style="text-align:center; padding:30px; color:var(--text-2);">
-        No hay platos activos.
-      </p>
-    `;
-    return;
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.id === 'totalPedido') {
+    document.getElementById('vistaTotalPedido').textContent = dinero(e.target.value);
   }
-
-  contenedor.innerHTML = platosActivos.map(p => `
-    <div class="cart-item" onclick="addToCart(${p.id})" style="cursor:pointer;">
-      <div>
-        <div class="nm">${p.icono || '🍽️'} ${p.nombre}</div>
-        <div class="pr">${p.categoria || 'Sin categoría'}</div>
-      </div>
-      <strong>${fmt(p.precio)}</strong>
-      <button class="btn btn-sm btn-primary" type="button">+</button>
-    </div>
-  `).join('');
-}
-
-function addToCart(platoId) {
-  const menu = DB.get(DB_KEYS.MENU) || [];
-  const plato = menu.find(p => p.id === platoId);
-
-  if (!plato) return;
-
-  const existe = cart.find(i => i.platoId === platoId);
-
-  if (existe) {
-    existe.cant++;
-  } else {
-    cart.push({
-      platoId: plato.id,
-      nombre: plato.nombre,
-      precio: Number(plato.precio),
-      cant: 1
-    });
-  }
-
-  renderCart();
-}
-
-function changeQty(platoId, cantidad) {
-  const item = cart.find(i => i.platoId === platoId);
-
-  if (!item) return;
-
-  item.cant += cantidad;
-
-  if (item.cant <= 0) {
-    cart = cart.filter(i => i.platoId !== platoId);
-  }
-
-  renderCart();
-}
-
-function renderCart() {
-  const cartList = document.getElementById('cartList');
-  const cartTotals = document.getElementById('cartTotals');
-
-  if (!cart.length) {
-    cartList.innerHTML = `
-      <p style="text-align:center; color:var(--text-3); padding:30px;">
-        Aún no hay platos seleccionados
-      </p>
-    `;
-  } else {
-    cartList.innerHTML = cart.map(i => `
-      <div class="cart-item">
-        <div>
-          <div class="nm">${i.nombre}</div>
-          <div class="pr">${fmt(i.precio)} c/u</div>
-        </div>
-
-        <div class="qty">
-          <button type="button" onclick="changeQty(${i.platoId}, -1)">−</button>
-          <strong>${i.cant}</strong>
-          <button type="button" onclick="changeQty(${i.platoId}, 1)">+</button>
-        </div>
-
-        <strong>${fmt(i.precio * i.cant)}</strong>
-      </div>
-    `).join('');
-  }
-
-  const total = cart.reduce((sum, i) => sum + i.precio * i.cant, 0);
-
-  cartTotals.innerHTML = `
-    <div class="row">
-      <span>Subtotal</span>
-      <span>${fmt(total)}</span>
-    </div>
-    <div class="row">
-      <span>IGV incluido</span>
-      <span>${fmt(total * 0.18)}</span>
-    </div>
-    <div class="row grand">
-      <span>Total</span>
-      <span>${fmt(total)}</span>
-    </div>
-  `;
-}
+});
 
 function guardarPedido() {
-  const mesaId = Number(document.getElementById('selMesa').value);
+  const mesa = document.getElementById('mesaPedido').value.trim();
+  const cliente = document.getElementById('clientePedido').value.trim();
+  const detalle = document.getElementById('detallePedido').value.trim();
+  const total = document.getElementById('totalPedido').value;
+  const estado = document.getElementById('estadoPedido').value;
 
-  if (!mesaId) {
-    toast('error', 'Selecciona una mesa');
+  if (!mesa || !cliente || !detalle || !total) {
+    alert('Completa todos los campos del pedido.');
     return;
   }
-
-  if (cart.length === 0) {
-    toast('error', 'Agrega al menos un plato');
-    return;
-  }
-
-  const pedidos = DB.get(DB_KEYS.PEDIDOS) || [];
-  const mesas = DB.get(DB_KEYS.MESAS) || [];
-
-  const total = cart.reduce((sum, i) => sum + i.precio * i.cant, 0);
 
   const nuevoPedido = {
     id: Date.now(),
-    mesaId,
-    mozo: 'Administrador',
-    estado: 'Pendiente',
-    items: [...cart],
-    subtotal: total,
-    total,
-    fecha: new Date().toISOString()
+    mesa,
+    cliente,
+    detalle,
+    total: Number(total),
+    estado,
+    fecha: obtenerFecha()
   };
 
   pedidos.push(nuevoPedido);
-  DB.set(DB_KEYS.PEDIDOS, pedidos);
-
-  const mesaIndex = mesas.findIndex(m => m.id === mesaId);
-
-  if (mesaIndex >= 0) {
-    mesas[mesaIndex].estado = 'Ocupada';
-    DB.set(DB_KEYS.MESAS, mesas);
-  }
+  guardarPedidosStorage();
 
   closeModal('pedidoModal');
-  toast('success', 'Pedido creado', 'El pedido fue registrado correctamente.');
   renderPedidos();
+
+  alert('Pedido registrado correctamente.');
 }
 
-function verPedido(id) {
-  const pedidos = DB.get(DB_KEYS.PEDIDOS) || [];
-  const pedido = pedidos.find(p => p.id === id);
+function verPedido(index) {
+  const p = pedidos[index];
 
-  if (!pedido) return;
+  if (!p) return;
 
   document.getElementById('detModalBody').innerHTML = `
-    <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
-      <div>
-        <strong>Pedido #${pedido.id}</strong><br>
-        <small>Mesa ${pedido.mesaId}</small>
+    <div style="display:grid; gap:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong style="font-size:18px;">Pedido #${index + 1}</strong><br>
+          <small style="color:var(--text-2);">Mesa ${p.mesa} · ${p.fecha}</small>
+        </div>
+        ${badgePedido(p.estado)}
       </div>
-      <div>${estadoBadge(pedido.estado)}</div>
-    </div>
 
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>Plato</th>
-          <th>Cantidad</th>
-          <th>Precio</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${pedido.items.map(i => `
-          <tr>
-            <td>${i.nombre}</td>
-            <td>${i.cant}</td>
-            <td>${fmt(i.precio)}</td>
-            <td><strong>${fmt(i.precio * i.cant)}</strong></td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
+      <div class="card" style="background:var(--surface-2);">
+        <p style="margin-bottom:8px;"><strong>Cliente:</strong></p>
+        <p>${p.cliente}</p>
+      </div>
 
-    <div style="text-align:right; padding-top:14px; font-size:18px; font-weight:800;">
-      Total: ${fmt(pedido.total)}
+      <div class="card" style="background:var(--surface-2);">
+        <p style="margin-bottom:8px;"><strong>Detalle del pedido:</strong></p>
+        <p>${p.detalle}</p>
+      </div>
+
+      <div style="text-align:right; font-size:22px; font-weight:800;">
+        Total: ${dinero(p.total)}
+      </div>
     </div>
   `;
 
   openModal('detPedidoModal');
 }
 
-function cambiarEstadoPedido(id) {
-  const orden = ['Pendiente', 'En preparación', 'Listo', 'Entregado', 'Pagado'];
-  const pedidos = DB.get(DB_KEYS.PEDIDOS) || [];
+function cambiarEstadoPedido(index) {
+  const estados = ['Pendiente', 'En preparación', 'Listo', 'Entregado', 'Pagado'];
 
-  const index = pedidos.findIndex(p => p.id === id);
+  if (!pedidos[index]) return;
 
-  if (index < 0) return;
+  const actual = pedidos[index].estado;
+  const posicion = estados.indexOf(actual);
 
-  const estadoActual = pedidos[index].estado;
-  const posicion = orden.indexOf(estadoActual);
+  pedidos[index].estado = estados[(posicion + 1) % estados.length];
 
-  pedidos[index].estado = orden[(posicion + 1) % orden.length];
-
-  DB.set(DB_KEYS.PEDIDOS, pedidos);
-  toast('success', 'Estado actualizado', `Nuevo estado: ${pedidos[index].estado}`);
+  guardarPedidosStorage();
   renderPedidos();
 }
 
-function eliminarPedido(id) {
-  if (!confirm('¿Eliminar este pedido?')) return;
+function eliminarPedido(index) {
+  if (!confirm('¿Seguro que deseas eliminar este pedido?')) return;
 
-  const pedidos = DB.get(DB_KEYS.PEDIDOS) || [];
-  const nuevosPedidos = pedidos.filter(p => p.id !== id);
-
-  DB.set(DB_KEYS.PEDIDOS, nuevosPedidos);
-  toast('success', 'Pedido eliminado');
+  pedidos.splice(index, 1);
+  guardarPedidosStorage();
   renderPedidos();
 }
