@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RestaurantePro - Sistema de Gestión</title>
+<link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+<script src="js/data.js"></script>
+<script>
+  localStorage.setItem(DB_KEYS.SESSION, JSON.stringify({
+    id: 1,
+    nombre: 'Administrador',
+    email: 'admin@restaurante.com',
+    rol: 'Administrador'
+  }));
+  window.location.href = 'dashboard.html';
+</script>
+</body>
+</html>
